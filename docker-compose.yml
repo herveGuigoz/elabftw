@@ -94,10 +94,6 @@ services:
       - "443:443"
     volumes:
       - $PWD/elab/web:/elabftw/uploads
-      # if you dont have enabled letsencrypt, comment the line below
-      - /etc/letsencrypt:/ssl
-    networks:
-      - elabftw-net
 
   # Elabftw database
   # Note: if you already have a MySQL server running, you don't need to use this image, as you can use the already existing one
