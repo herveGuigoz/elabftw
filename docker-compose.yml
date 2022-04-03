@@ -1,0 +1,131 @@
+version: '3'
+
+services:
+  # https://www.elabftw.net
+  elabftw:
+    image: elabftw/elabimg:latest
+    restart: always
+    container_name: elabftw
+    cap_drop:
+      - SYS_ADMIN
+      - AUDIT_WRITE
+      - MKNOD
+      - SYS_CHROOT
+      - SETFCAP
+      - NET_RAW
+      - SYS_PTRACE
+    environment:
+      #########################
+      # ELABFTW CONFIGURATION #
+      #########################
+      # The secret key is used for encrypting the SMTP password
+      # get your secret key from https://get.elabftw.net/?key
+      # if you don't want to get it from an external source you can also do that:
+      # docker run --rm -t --entrypoint '/bin/sh' elabftw/elabimg -c "php /elabftw/web/install/generateSecretKey.php"
+      SECRET_KEY: ${SECRET_KEY:-!ChangeMe!}
+      # adjust maximum size of uploaded files
+      MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE:-100M}
+
+      #######################
+      # NGINX CONFIGURATION #
+      #######################
+      # change to your server name in nginx config
+      # example value: elab.uni.edu
+      SERVER_NAME: ${SERVER_NAME:-localhost}
+      # optional: disable https, use this to have an http server listening on port 443
+      # useful if the SSL stack is handled by haproxy or something alike
+      # default value: false
+      DISABLE_HTTPS: ${DISABLE_HTTPS:-false}
+      # set to true to use letsencrypt or other certificates
+      # note: does nothing if DISABLE_HTTPS is set to true
+      # default value: false
+      ENABLE_LETSENCRYPT: ${ENABLE_LETSENCRYPT:-false}
+      # enable ipv6 (make sure you have an AAAA dns record!)
+      ENABLE_IPV6: ${ENABLE_IPV6:-false}
+      # optional: adjust the user/group that will own the uploaded files
+      # useful in very particular situations, like with NFSv4. You don't really need to change this in most situations.
+      ELABFTW_USER: ${ELABFTW_USER:-nginx}
+      ELABFTW_GROUP: ${ELABFTW_GROUP:-nginx}
+      ELABFTW_USERID: ${ELABFTW_USERID:-101}
+      ELABFTW_GROUPID: ${ELABFTW_GROUPID:-101}
+      # enable if you want nginx to be configured with set_real_ip_from directives.
+      SET_REAL_IP: ${SET_REAL_IP:-false}
+      # the IP address/addresses. Separate them with a , AND A SPACE. Several set_real_ip_from lines will be added to the nginx config. One for each.
+      # this does nothing if SET_REAL_IP is set to false
+      SET_REAL_IP_FROM: ${SET_REAL_IP_FROM:-192.168.31.48, 192.168.0.42, 10.10.13.37}
+      # adjust the number of worker processes nginx will spawn.
+      NGINX_WORK_PROC: ${NGINX_WORK_PROC:-auto}
+      # optional: be less verbose during init.
+      SILENT_INIT: ${SILENT_INIT:-false}
+      # set to true for development.
+      DEV_MODE: ${DEV_MODE:-false}
+
+      #######################
+      # MYSQL CONFIGURATION #
+      #######################
+      # the name of the mysql container
+      # you can put here the IP address of an existing MySQL server if you already have one running
+      DB_HOST: database
+      # port on which the MySQL server is listening
+      DB_PORT: ${DB_PORT:-3306}
+      # name of the MySQL database
+      DB_NAME: ${DB_NAME:-elabftw}
+      # MySQL user with write access to the previously named database
+      DB_USER: ${DB_USER:-elabftw}
+      # MySQL password
+      DB_PASSWORD: ${DB_PASSWORD:-Secre3t}
+      # Mysql Cert path: you only need this if you connect to a mysql server with tls
+      # DB_CERT_PATH: ${DB_CERT_PATH:-/mysql-cert/cert.pem}
+      
+      #####################
+      # PHP CONFIGURATION #
+      #####################
+      # the timezone in which the server is.
+      PHP_TIMEZONE: ${PHP_TIMEZONE:-Europe/Paris}
+      TZ: ${TZ:-Europe/Paris}
+      # set the limit of simultaneous request that will be server
+      # see http://php.net/manual/en/install.fpm.configuration.php
+      PHP_MAX_CHILDREN: ${PHP_MAX_CHILDREN:-50}
+      # adjust the max execution time of PHP scripts. Allows for bigger ZIP exports.
+      PHP_MAX_EXECUTION_TIME: ${PHP_MAX_EXECUTION_TIME:-120}
+      # adjust the amount of memory available to PHP, increase it if you run into memory issues due to the size of your database.
+      MAX_PHP_MEMORY: ${MAX_PHP_MEMORY:-256M}
+    ports:
+      - "443:443"
+    volumes:
+      - $PWD/elab/web:/elabftw/uploads
+    networks:
+      - elabftw-net
+
+  # Elabftw database
+  # Note: if you already have a MySQL server running, you don't need to use this image, as you can use the already existing one
+  # In this case, add the IP address of the server in DB_HOST and comment out or remove this block
+  database:
+    image: arm64v8/mysql:oracle # use either mysql:8.0 or arm64v8/mysql:oracle
+    restart: always
+     # fix issue with "The server requested authentication method unknown to the client [caching_sha2_password]"
+    command: --default-authentication-plugin=mysql_native_password
+    container_name: database
+    cap_drop:
+      - AUDIT_WRITE
+      - MKNOD
+      - SYS_CHROOT
+      - SETFCAP
+      - NET_RAW
+    cap_add:
+      - SYS_NICE
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-Secre3t}
+      MYSQL_DATABASE: ${DB_NAME:-elabftw}
+      MYSQL_USER: ${DB_USER:-elabftw}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-Secre3t}
+      TZ: ${TZ:-Europe/Paris}
+    volumes:
+      - $PWD/elab/mysql:/var/lib/mysql
+    expose:
+      - '3306'
+    networks:
+      - elabftw-net
+
+networks:
+  elabftw-net:
