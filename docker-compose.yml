@@ -94,6 +94,8 @@ services:
       - "443:443"
     volumes:
       - $PWD/elab/web:/elabftw/uploads
+      # if you have enabled letsencrypt, uncomment the line below
+      - /etc/letsencrypt:/ssl
     networks:
       - elabftw-net
 
