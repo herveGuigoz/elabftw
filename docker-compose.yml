@@ -142,7 +142,7 @@ services:
     cap_add:
       - SYS_NICE
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-Secre3t}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-Secre3t}
       MYSQL_DATABASE: ${DB_NAME:-elabftw}
       MYSQL_USER: ${DB_USER:-elabftw}
       MYSQL_PASSWORD: ${DB_PASSWORD:-Secre3t}
