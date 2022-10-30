@@ -1,11 +1,41 @@
 version: '3'
 
 services:
+  caddy:
+    image: caddy
+    container_name: caddy
+    depends_on:
+      - elab
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-localhost}
+      ELAB_UPSTREAM: elab:443
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - './public:/srv/public'
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      # HTTP
+      - target: 80
+        published: ${HTTP_PORT:-80}
+        protocol: tcp
+      # HTTPS
+      - target: 443
+        published: ${HTTPS_PORT:-443}
+        protocol: tcp
+      # HTTP/3
+      - target: 443
+        published: ${HTTP3_PORT:-443}
+        protocol: udp
+
   # https://www.elabftw.net
-  elabftw:
+  elab:
     image: elabftw/elabimg:latest
+    container_name: elab
     restart: always
-    container_name: elabftw
+    depends_on:
+      - database
     cap_drop:
       - SYS_ADMIN
       - AUDIT_WRITE
@@ -25,7 +55,8 @@ services:
       SECRET_KEY: ${SECRET_KEY:-!ChangeMe!}
       # adjust maximum size of uploaded files
       MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE:-100M}
-
+      # The canonical URL to the website, including port if not standard
+      SITE_URL: https://${SERVER_NAME:-localhost}
       #######################
       # NGINX CONFIGURATION #
       #######################
@@ -35,11 +66,11 @@ services:
       # optional: disable https, use this to have an http server listening on port 443
       # useful if the SSL stack is handled by haproxy or something alike
       # default value: false
-      DISABLE_HTTPS: ${DISABLE_HTTPS:-false}
+      DISABLE_HTTPS: 'true'
       # set to true to use letsencrypt or other certificates
       # note: does nothing if DISABLE_HTTPS is set to true
       # default value: false
-      ENABLE_LETSENCRYPT: ${ENABLE_LETSENCRYPT:-false}
+      ENABLE_LETSENCRYPT: 'false'
       # enable ipv6 (make sure you have an AAAA dns record!)
       ENABLE_IPV6: ${ENABLE_IPV6:-false}
       # optional: adjust the user/group that will own the uploaded files
@@ -58,7 +89,7 @@ services:
       # optional: be less verbose during init.
       SILENT_INIT: ${SILENT_INIT:-false}
       # set to true for development.
-      DEV_MODE: ${DEV_MODE:-false}
+      DEV_MODE: ${DEV_MODE:-true}
 
       #######################
       # MYSQL CONFIGURATION #
@@ -90,24 +121,18 @@ services:
       PHP_MAX_EXECUTION_TIME: ${PHP_MAX_EXECUTION_TIME:-120}
       # adjust the amount of memory available to PHP, increase it if you run into memory issues due to the size of your database.
       MAX_PHP_MEMORY: ${MAX_PHP_MEMORY:-256M}
-    ports:
-      - "443:443"
     volumes:
-      - $PWD/elab/web:/elabftw/uploads
-      # if you dont have enabled letsencrypt, comment the line below
-      - /etc/letsencrypt:/ssl
-    networks:
-      - elabftw-net
+      - $PWD/elab/uploads:/elabftw/uploads
 
   # Elabftw database
   # Note: if you already have a MySQL server running, you don't need to use this image, as you can use the already existing one
   # In this case, add the IP address of the server in DB_HOST and comment out or remove this block
   database:
     image: arm64v8/mysql:oracle # use either mysql:8.0 or arm64v8/mysql:oracle
+    container_name: database
     restart: always
      # fix issue with "The server requested authentication method unknown to the client [caching_sha2_password]"
     command: --default-authentication-plugin=mysql_native_password
-    container_name: database
     cap_drop:
       - AUDIT_WRITE
       - MKNOD
@@ -124,10 +149,11 @@ services:
       TZ: ${TZ:-Europe/Paris}
     volumes:
       - $PWD/elab/mysql:/var/lib/mysql
-    expose:
-      - '3306'
-    networks:
-      - elabftw-net
-
-networks:
-  elabftw-net:
+    ports:
+      - target: 3306
+        published: 3306
+        protocol: tcp
+  
+volumes:
+  caddy_data:
+  caddy_config:

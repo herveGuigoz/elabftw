@@ -1,30 +1,60 @@
-# elabftw
+# Elabftw with Caddy
 
-## Enable TLS certificates
+Opinioned [elabftw](https://github.com/elabftw/elabftw) configuration with [caddy](https://caddyserver.com/docs/) server.
 
-- `Certbot` should be installed.
+## Features
 
-```env
-# .env
-DISABLE_HTTPS=false
-ENABLE_LETSENCRYPT=true
-```
+- Automatic HTTPS provisions TLS certificates for all your sites and keeps them renewed.
+- Can serve static files or other services with caddy directives
 
-```bash
-# Select `Spin up a temporary webserver (standalone)`
-sudo certbot certonly -d <domain> -m <email> --agree-tos
-```
+## Getting started
 
-## Renew TLS certificates
+### Configuration
+
+Create `.env` with your own configuration
+
+### Build containers
 
 ```bash
-docker-compose stop
+docker-compose build --pull --no-cache
 ```
 
-```bash
-certbot renew
-```
+### Start containers
 
 ```bash
-docker-compose up -d --remove-orphans --no-recreate
+docker-compose up --detach
 ```
+
+### Import the database structure
+
+```bash
+docker exec -it elab bin/install start
+```
+
+## Additional information
+
+If you comme from default elab configuration:
+
+- [Backup](https://doc.elabftw.net/backup.html#backup) your installation
+
+```bash
+elabctl backup
+```
+
+- Stop old container
+
+```bash
+elabctl stop
+```
+
+- Edit the volumes to bind the default directories.
+
+```yaml
+# elab service
+volumes:
+    - /var/elabftw/web:/elabftw/uploads
+# database service
+volumes:
+    - /var/elabftw/mysql:/var/lib/mysql
+```
+

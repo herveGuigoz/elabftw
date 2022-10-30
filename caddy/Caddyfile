@@ -1,0 +1,15 @@
+{
+    # Debug
+    {$DEBUG}
+}
+
+
+{$SERVER_NAME} {
+    reverse_proxy {$ELAB_UPSTREAM}
+}
+
+public.{$SERVER_NAME} {
+    root * /srv/public
+    encode zstd gzip
+    file_server
+}
