@@ -50,10 +50,10 @@ elabctl stop
 - Populate env file
 
 ```bash
-echo "$(grep -o -m 1 "SERVER_NAME=.*" docker-compose.yml)\n$(grep -o -m 1 "MYSQL_ROOT_PASSWORD=.*" docker-compose.yml)\n$(grep -o -m 1 "DB_NAME=.*" docker-compose.yml)\n$(grep -o -m 1 "DB_USER=.*" docker-compose.yml)\n$(grep -o -m 1 "DB_PASSWORD=.*" docker-compose.yml)\n$(grep -o -m 1 "SECRET_KEY=.*" docker-compose.yml)" > .env
+echo "$(grep -o -m 1 "SERVER_NAME=.*" /etc/elabftw.yml)\n$(grep -o -m 1 "MYSQL_ROOT_PASSWORD=.*" /etc/elabftw.yml)\n$(grep -o -m 1 "DB_NAME=.*" /etc/elabftw.yml)\n$(grep -o -m 1 "DB_USER=.*" /etc/elabftw.yml)\n$(grep -o -m 1 "DB_PASSWORD=.*" /etc/elabftw.yml)\n$(grep -o -m 1 "SECRET_KEY=.*" /etc/elabftw.yml)" > .env
 ```
 
-- Edit the volumes to bind the default directories.
+- Edit the volumes to bind the default directories in `docker-compose.yaml` file
 
 ```yaml
 # elab service
