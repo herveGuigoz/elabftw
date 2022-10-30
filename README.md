@@ -47,6 +47,12 @@ elabctl backup
 elabctl stop
 ```
 
+- Populate env file
+
+```bash
+echo "$(grep -o -m 1 "SERVER_NAME=.*" docker-compose.yml)\n$(grep -o -m 1 "MYSQL_ROOT_PASSWORD=.*" docker-compose.yml)\n$(grep -o -m 1 "DB_NAME=.*" docker-compose.yml)\n$(grep -o -m 1 "DB_USER=.*" docker-compose.yml)\n$(grep -o -m 1 "DB_PASSWORD=.*" docker-compose.yml)\n$(grep -o -m 1 "SECRET_KEY=.*" docker-compose.yml)" > .env
+```
+
 - Edit the volumes to bind the default directories.
 
 ```yaml
