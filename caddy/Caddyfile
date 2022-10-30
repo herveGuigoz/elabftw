@@ -3,13 +3,22 @@
     {$DEBUG}
 }
 
-
 {$SERVER_NAME} {
+    root * /srv/public
+
+    # If you want to deliver static file for custom path
+    handle_path /static {
+        uri strip_prefix /static
+        encode zstd gzip
+        file_server
+    }
+
     reverse_proxy {$ELAB_UPSTREAM}
 }
 
-public.{$SERVER_NAME} {
-    root * /srv/public
-    encode zstd gzip
-    file_server
-}
+# If you want to bind static file on sub domains
+# subDomain.{$SERVER_NAME} {
+#     root * /srv/public
+#     encode zstd gzip
+#     file_server
+# }

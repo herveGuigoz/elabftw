@@ -11,7 +11,7 @@ Opinioned [elabftw](https://github.com/elabftw/elabftw) configuration with [cadd
 
 ### Configuration
 
-Create `.env` with your own configuration
+Edit `.env` with your own configuration
 
 ### Build containers
 
